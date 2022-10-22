@@ -2,17 +2,20 @@ const express = require('express');
 const routes = express.Router();
 const userContoller = require('../controllers/User');
 const orderController = require('../controllers/order');
-const auth = require('../middleware/auth');
+const {verifyToken,verifyTokenAuthorization,verifyTokenAndAdmin}=require('../middleware/auth');
 
 
 
 routes.post('/user/register', userContoller.registerUser);
 routes.post('/user/login', userContoller.userLogin);
-routes.put('/user/profile', auth, userContoller.getUserProfile);
-routes.post('/user/home', auth, orderController.addOrderItems);
+routes.put('/user/profile', verifyTokenAuthorization, userContoller.getUserProfile);
+routes.post('/user/home', verifyToken, orderController.addOrderItems);
+routes.put('/user/updateadmin',userContoller.update);
+routes.get('/user/refreshtoken',userContoller.refreshTokenNow);
+routes.get('/user/logout',userContoller.handleLogout);
 
-routes.get('/home', auth, (req, res) => {
-    res.status(200).json({ message: 'Welcome To Dawn' });
+routes.get('/home', verifyToken, (req, res) => {
+   return res.status(200).json({ message: 'Welcome To Dawn' });
 })
 
 

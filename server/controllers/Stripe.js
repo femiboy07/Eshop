@@ -1,41 +1,46 @@
 require('dotenv').config();
-const Stripe = require('stripe');
+const Stripe = require('stripe').Stripe(process.env.STRIPE_API_KEY);
 const Cart = require('../models/cart');
-const stripe = Stripe(process.env.STRIPE_API_KEY)
-const Order = require('../models/order');
+const stripe = Stripe
+const Order=require('../models/order');
 const express = require('express');
 const expressAsyncHandler = require('express-async-handler');
 const { request } = require('express');
+const Product = require('../models/Product');
+const { events } = require('../models/Product');
 
 
-const checkoutSession = expressAsyncHandler(async(req, res) => {
-    // const { userId } = req.params.id;
-
-
-
-    const customer = await stripe.customers.create({
+const checkoutSession =async(req, res) => {
+ const customer = await stripe.customers.create({
         metadata: {
             userId: req.body.userId,
             carts: JSON.stringify(req.body.cartItems),
         },
     })
 
-
-    const line_items = req.body.cartItems.map(item => {
+  const carts=req.body.cartItems;
+    const line_items = carts.map(item => {
         return {
             price_data: {
                 currency: "usd",
                 product_data: {
                     name: item.name,
-                    images: [item.image],
+                    images:item.image,
                     metadata: {
                         id: item._id,
+                        partimage:item.partimage
 
                     },
                 },
-
+                
                 unit_amount: item.price * 100,
             },
+            adjustable_quantity: {
+                enabled: true,
+                minimum: 1,
+                maximum: 10
+              },
+             
             quantity: item.quantity,
         }
     });
@@ -106,7 +111,7 @@ const checkoutSession = expressAsyncHandler(async(req, res) => {
     res.send({ url: session.url })
 
 
-})
+}
 
 
 const createOrder = async(customer, data) => {
@@ -114,84 +119,70 @@ const createOrder = async(customer, data) => {
 
     const products = items.map((item) => {
         return {
-            productId: item.id,
+            productId: item._id,
             quantity: item.quantity,
             name: item.name,
-            image: item.image
+            partimage: item.partimage,
+            color:item.color
         }
     })
-
-    const newOrder = new Order({
+    const newOrder =new Order ({
         userId: customer.metadata.userId,
         customerId: data.customer,
-        paymentIntentId: data.payment_intent,
-        products,
-        subtotal: data.amount_subtotal,
+        items:products,
+        bill: data.amount_subtotal,
         total: data.amount_total,
         shipping: data.customer_details,
         payment_status: data.payment_status,
     })
+   
 
     try {
         const saveOrder = await newOrder.save();
-        console.log('processed order', saveOrder);
+        console.log('processed order', newOrder);
+        return res.status(200).json(saveOrder)
     } catch (err) {
         console.log(err)
     }
 
 }
 const endpointSecret = "whsec_01a9a73f93d7dfa247d1cabd3df1c9f205ad3f37e21cf4e2f25389a5d07635f6";
-const webhooks = async(req, res) => {
-    let data;
-    let eventType;
+const webhooks =expressAsyncHandler((req, res) => {
+    // let data;
+    // let eventType;
 
     // Check if webhook signing is configured.
-    let endpointSecret;
+    // let endpointSecret;
     //webhookSecret = process.env.STRIPE_WEB_HOOK;
-
-    if (endpointSecret) {
+    let signature = req.headers["stripe-signature"];
+    
         // Retrieve the event by verifying the signature using the raw body and secret.
         let event;
-        let signature = req.headers["stripe-signature"];
-
+        const payload=req.body;
+        
         try {
-            event = stripe.webhooks.constructEvent(
-                req.body,
-                signature,
-                endpointSecret
+            event = stripe.webhooks.constructEvent(payload,signature,endpointSecret
             );
         } catch (err) {
             console.log(`⚠️  Webhook signature verification failed:  ${err}`);
-            return res.sendStatus(400);
+            return res.sendStatus(400).send('invalid cant continue');
         }
-        // Extract the object from the event.
-        data = event.data.object;
-        eventType = event.type;
-    } else {
-        // Webhook signing is recommended, but if the secret is not configured in `config.js`,
-        // retrieve the event data directly from the request body.
-        data = req.body.data.object;
-        eventType = req.body.type;
+        let data=event.data.object;
+          switch(event.type){
+            case "checkout.session.completed":
+            stripe.customers.retrieve(data.id).then((customer)=>{
+                
+                //  createOrder(customer, data);
+                 console.log(customer)
+                 
+                 console.log("data",data);
+                    
+                
+            }).catch((err) => console.log(err.message));
     }
 
-    // Handle the checkout.session.completed event
-    if (eventType === "checkout.session.completed") {
-        stripe.customers
-            .retrieve(data.customer)
-            .then(async(customer) => {
-                try {
-                    // CREATE ORDER
-                    createOrder(customer, data);
-                } catch (err) {
-                    console.log(typeof createOrder);
-                    console.log(err);
-                }
-            })
-            .catch((err) => console.log(err.message));
-    }
-
-    res.status(200).end();
-}
+    res.status(200).send('response succesfull');
+})
 
 
 

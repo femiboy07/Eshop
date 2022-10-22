@@ -17,21 +17,19 @@ const UserSchema = new Schema({
             "Please Provide a valid Email"
         ],
         unique: true
-
     },
     password: {
         type: String,
         required: [true, "please type a password"],
         minLength: 6,
-        select: false
+        select: true
     },
     token: String,
     isAdmin: {
         type: Boolean,
         default: false
     },
-
-    resetPasswordToken: String,
+    refreshToken: String,
     resetPasswordExpire: Date,
 
 

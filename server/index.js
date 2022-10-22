@@ -10,21 +10,30 @@ const userRoute = require('./routes/UserRoutes');
 const productRoute = require('./routes/ProductRoutes');
 const stripeRoute = require('./routes/StripeRoute');
 const cartRoute = require('./routes/CartRoute');
+const cookieparser=require('cookie-parser');
 const auth = require('./middleware/auth');
+const path=require('path');
+const credentials = require('./middleware/credentials');
+const corsOptions = require('./config/corsOption');
 
 
 
 //invoke expresss here
-
 const app = express();
-//use modules
+
+// //use modules
+app.use(credentials);
+// const corsConfig={
+//     origin:true,
+//     credentials:true
+// }
+app.use(cors(corsOptions));
+// app.use(bodyParser.raw({type:'*/*'}))
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended:false}));
+app.use('/uploads',express.static(path.join(__dirname,'uploads')));
+app.use(cookieparser())
 
-app.use(cors({
-    exposedHeaders: ['Content-Range'],
-
-}));
 
 
 // app.use(session);
@@ -45,19 +54,18 @@ mongoose.connect(process.env.DB_CONFIG, { useNewUrlParser: true, useUnifiedTopol
 })
 
 setTimeout(() => {
-
-
     //admin route
     app.use('/api', Route);
     //user route
     app.use('/api', userRoute);
-
     app.use('/api', cartRoute);
 
     //product route
     app.use('/api', productRoute);
 
     app.use('/api', stripeRoute);
+
+
 
     // home request
 }, 200)

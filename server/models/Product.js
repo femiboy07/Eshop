@@ -2,12 +2,12 @@
   const { Schema } = mongoose;
 
 
-  const reviewSchema = mongoose.Schema({
-      name: { type: String, required: true },
+  const reviewSchema =new Schema({
+      name: { type: String},
       rating: { type: Number, required: true },
       comment: { type: String, required: true },
       user: {
-          type: mongoose.Schema.Types.ObjectId,
+          type: Schema.Types.ObjectId,
           required: true,
           ref: 'User',
       },
@@ -15,35 +15,59 @@
       timestamps: true,
   })
 
+  const partsSchema=new Schema({
+            partimage:{
+                type:String,
+                required:true
+            },
+            color:{
+                type:String,
+                required:true
+            },
+            size:Number,
+        
+            countInStock:{
+                    type:Number,
+                    required:true,
+                    default:0
+            },
+            price:{
+                  type:Number,
+                  required:true,
+                  default:0
+            }
+            
+  },{
+    timestamps:true
+  })
 
 
-  const ProductSchema = mongoose.Schema({
-      user: {
-          type: mongoose.Schema.Types.ObjectId,
-          required: true,
-          ref: 'User',
-      },
-      name: {
+
+  const ProductSchema =new Schema({
+     name: {
           type: String,
-          required: true,
+          required: true
       },
-      image: {
-          type: String,
-          required: true,
-      },
+      image:[String],
+    
       brand: {
           type: String,
           required: true,
       },
       category: {
-          type: String,
+          type:String,
           required: true,
+      },
+      ProductType:{
+         type:String,
+         required:true
       },
       description: {
           type: String,
           required: true,
       },
       reviews: [reviewSchema],
+      parts:[partsSchema],
       rating: {
           type: Number,
           required: true,
@@ -54,23 +78,17 @@
           required: true,
           default: 0,
       },
-      price: {
-          type: Number,
-          required: true,
-          default: 0,
-      },
-      countInStock: {
-          type: Number,
-          required: true,
-          default: 0
-
-      },
-
-
-  }, {
-      timestamps: true,
+     
+          
+}, {
+ toJSON:{virtuals:true},
+timestamps: true,
   })
 
+  ProductSchema.virtual('id').set(function(id){
+     this._id=id;
+     this.parts._id=id;
+  })
 
-  const Product = mongoose.model('Product', ProductSchema);
-  module.exports = Product;
+ const Product = mongoose.model('Product', ProductSchema);
+ module.exports = Product;

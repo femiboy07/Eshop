@@ -21,17 +21,18 @@ const readAllProduct = async(req, res) => {
         const count = await Product.countDocuments({...keyword })
         await Product.find({...keyword }).limit(pageSize).skip(pageSize * (page - 1)).then((product) => {
             res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
-            res.setHeader('Content-Range', `users 0 - 2 / ${product.length}`);
+            res.setHeader('Content-Range', `products 0 - 2 / ${product.length}`);
 
 
             const products = product.map(resource => ({...resource,
                 id: resource._id,
                 name: resource.name,
                 description: resource.description,
-                category: resource.category,
+                categories: resource.categories,
                 image: resource.image,
-                countInStock: resource.countInStock,
+                parts:resource.parts,
                 numReviews: resource.numReviews,
+                ProductType:resource.ProductType,
                 brand: resource.brand,
                 rating: resource.rating,
                 createdAt: resource.createdAt,
@@ -53,9 +54,8 @@ const readProduct = async(req, res) => {
     const { id } = req.params;
 
     try {
-        await Product.findById(id).then((product) => {
-            res.status(200).send(product);
-        })
+     const product=await Product.findById({_id:id});
+        return res.status(200).json(product)
     } catch (err) {
         res.status(400).json({ message: 'cant get the id of product' });
     }
@@ -72,22 +72,48 @@ const page_size = 3;
 const searchProducts = async(req, res) => {
     const pageSize = req.query.pageSize || page_size;
     const page = req.query.page || 1;
-    const category = req.query.category || '';
+    const categories = req.query.categories || '';
     const price = req.query.price || '';
     const order = req.query.order || '';
     const searchQuery = req.query.q || '';
-    const rating = req.query.rqting || '';
+    const rating = req.query.rating || '';
+    // const color=req.query.color || '';
+    const producttypefilter=req.query.ProductType || '';
 
     try {
-        const queryFilter =
-            searchQuery && searchQuery !== 'all' ? {
-                name: {
-                    $regex: searchQuery,
-                    $options: 'i',
-                },
-            } : {};
 
-        const categoryFilter = category && category !== 'all' ? { category } : {};
+        // const colorFilter=color && color !== 'all' ? {
+        //     color:{
+        //         $regex : color,
+        //         $options : 'i',
+            
+        //     },
+        // }:{};
+        const queryFilter =
+        searchQuery && searchQuery !== 'all' ? {
+          "$or":[
+            {name: {
+                $regex: searchQuery,
+                $options: 'i',
+            }},
+            {brand:{
+                $regex:searchQuery,
+                $options:'i'
+            }},
+           {'parts.color':{
+               $regex:searchQuery,
+               $options:'i'
+           }}
+            
+          ]
+        } : {};
+
+
+            // const producttypefilter=producttypefilter && producttypefilter !== 'all' ?{
+                
+            // }
+
+        const categoryFilter = categories && categories !== 'all' ? { categories } : {};
         const ratingFilter =
             rating && rating !== 'all' ? {
                 rating: {
@@ -115,6 +141,7 @@ const searchProducts = async(req, res) => {
                 ...categoryFilter,
                 ...priceFilter,
                 ...ratingFilter,
+                
             })
             .sort(sortOrder)
             .skip(pageSize * (page - 1))
@@ -125,6 +152,7 @@ const searchProducts = async(req, res) => {
             ...categoryFilter,
             ...priceFilter,
             ...ratingFilter,
+        
         });
         res.status(201).send({
             products,
@@ -140,16 +168,56 @@ const searchProducts = async(req, res) => {
 
     }
 }
+const getReviews=async(req,res)=>{
+    const {reviews}=req.params;
+    try{
+        const reviews= await Product.findById(reviews).select('reviews');
+          return res.status(200).json(reviews);
+    }catch(error){
+        res.status(400).send(error)
+
+    }
+}
 
 const getProductCategories = async(req, res) => {
     try {
-        const categories = await Product.find().distinct('category');
+        const categories = await Product.find().distinct('categories');
         res.status(200).send(categories);
     } catch {
         res.status(400).send('invalid request');
 
     }
 
+}
+
+const searchMultipleFields=async(req,res)=>{
+    const searchQuery=req.params.key;
+    const queryFilter =
+    searchQuery && searchQuery !== 'all' ? {
+      "$or":[
+        {name: {
+            $regex: searchQuery,
+            // $options: 'i',
+        }},
+        {brand:{
+            $regex:searchQuery,
+            // $options:'i'
+        }},
+       {'parts.color':{
+           $regex:searchQuery,
+        
+        //    $options:'i'
+       }}
+        
+      ]
+    } : {};
+    try{
+     const findsearh=await Product.find({...queryFilter}).limit(5).select('parts');
+
+       res.status(200).send(findsearh)
+    }catch(err){
+      res.status(400).send(err)
+    }
 }
 
 const userlistAllProduct = async(req, res) => {
@@ -159,10 +227,16 @@ const userlistAllProduct = async(req, res) => {
 
     const queryFilter =
         searchQuery && searchQuery !== 'all' ? {
-            name: {
+            "$or":[
+            {name: {
                 $regex: searchQuery,
                 $options: 'i',
-            },
+            }},
+            {color:{
+                $regex:searchQuery,
+                $options:'i'
+            }}
+            ]
         } : {};
 
     try {
@@ -229,8 +303,7 @@ const createProductReview = expressAsyncHandler(async(req, res) => {
             user: req.user._id,
         }
 
-        product.reviews.push(review)
-
+        product.reviews.push(review);
         product.numReviews = product.reviews.length;
 
         product.rating =
@@ -238,7 +311,7 @@ const createProductReview = expressAsyncHandler(async(req, res) => {
             product.reviews.length
 
         await product.save()
-        res.status(201).send({ message: 'Review added' })
+        res.status(201).send({ message: 'Review added',product })
     } else {
         res.status(404)
         throw new Error('Product not found')
@@ -246,4 +319,5 @@ const createProductReview = expressAsyncHandler(async(req, res) => {
 
 })
 
-module.exports = { readAllProduct, readAllProducts, createProductReview, readProduct, getTopProducts, getProductCategories, searchProducts, userlistAllProduct };
+module.exports = { readAllProduct, readAllProducts, createProductReview, readProduct, getTopProducts, getProductCategories, searchProducts, userlistAllProduct,
+    searchMultipleFields,getReviews };
