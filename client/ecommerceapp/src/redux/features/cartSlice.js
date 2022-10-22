@@ -1,17 +1,50 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { apiSlice, authSlice, cartSlices } from './api/apiSlice';
+import {  cartSlices } from './api/apiSlice';
 import axios from 'axios';
 
 
 const baseUrl = `http://localhost:5000/api/cart/`;
 
-export const updateCarts = createAsyncThunk('cart/updateCarts', async({ userId, ...initialPost }) => {
-    const response = await axios.put(`${baseUrl}${userId}`, initialPost);
+export const updateCarts = createAsyncThunk('cart/updateCarts', async({ userId, ...initialPost},{dispatch, getState,rejectWithValue}) => {
+   
+    
+        const token = getState().auth.token;
+        const config = {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        const response = await axios.put(`${baseUrl}${userId}`, initialPost,config);
+        return response.data;
+    
+    
+    
+    
+})
+
+
+
+
+export const deleteCart = createAsyncThunk(`cart/deleteCart`, async({ userId, productId},{getState}) => {
+    const token = getState().auth.token;
+    const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    const response = await axios.delete(`${baseUrl}${userId}/${productId}`,config);
     return response.data;
 })
 
-export const deleteCart = createAsyncThunk(`cart/deleteCart`, async({ userId, productId }) => {
-    const response = await axios.delete(`${baseUrl}${userId}/${productId}`);
+export const getCart=createAsyncThunk('cart/getCart',async({userId},{getState})=>{
+    const token = getState().auth.token;
+    
+    const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    const response = await axios.get(`${baseUrl}${userId}`,config);
     return response.data;
 })
 
@@ -19,7 +52,7 @@ export const deleteCart = createAsyncThunk(`cart/deleteCart`, async({ userId, pr
 
 const cartSlice = createSlice({
     name: 'cart',
-    initialState: { carts: null, isLoading: false, error: '' },
+    initialState: { carts: null, isLoading: false, error: '' ,status:'idle'},
     reducers: {
 
         clearCart(state, action) {
@@ -51,6 +84,15 @@ const cartSlice = createSlice({
         }).addCase(deleteCart.rejected, (state, action) => {
             state.error = action.payload;
             state.isLoading = false;
+        }).addCase(getCart.pending, (state, action) => {
+            
+            state.status = 'loading';
+        }).addCase(getCart.fulfilled, (state, action) => {
+            state.status = 'succeeded';
+            state.carts=action.payload;
+        }).addCase(getCart.rejected, (state, action) => {
+            state.error=action.payload;
+            state.status = 'failed';
         })
         builder.addMatcher(
             cartSlices.endpoints.addToCart.matchFulfilled, (state, action) => {
@@ -60,13 +102,12 @@ const cartSlice = createSlice({
                 state.carts = action.payload;
             },
 
-
-
+        ).addMatcher(
             cartSlices.endpoints.getCart.matchFulfilled, (state, action) => {
                 state.carts = action.payload;
             }
-
         )
+        
 
 
 

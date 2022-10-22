@@ -13,55 +13,26 @@ import RatingValue from '../Rating/rating.component';
 
 const ProductItems=(props)=>{
          const {product}=props;
-         const navigate=useNavigate();
-         const dispatch=useDispatch();
+        
+        
 
     const Item=styled(Box)(({theme})=>({
           width:300,
           display:'flex',
           flexDirection:'column',
-          
-
-         
-         
           [theme.breakpoints.down('sm')]:{
               maxWidth:190,
           },
           [theme.breakpoints.up('sm')]:{
             maxWidth:290,
-            
-        }, 
-
-        [theme.breakpoints.up('md')]:{
+          }, 
+         [theme.breakpoints.up('md')]:{
             width:290,
-            
-            
         }, 
 
-        // [theme.breakpoints.up('xs')]:{
-        //     width:400,
-            
-            
-        // },
-
-
-
-         
-
-
-    }))
+}))
 
     
-    //  const selectItems=useSelector(state=>state.user.cartItems);
-    //  const dispatch=useDispatch();
-    //  console.log(selectItems);
-
-    // const cartHandleFunc=(product)=>{
-
-    //     dispatch(cartAddItem(product))
-    //     navigate(`/cart`)
-        
-    // }
     
 
 
@@ -75,13 +46,10 @@ const ProductItems=(props)=>{
            }}}>
                <CardActionArea>
                    <Link to={`/product/${product._id}`}>
-                   <CardMedia
+                <CardMedia
                    component='img'
-                   image={product.image}
+                   src={product.parts[0].partimage}
                    height={250}
-                
-
-                   
                    alt='product'
                    />
                    </Link>
@@ -96,7 +64,7 @@ const ProductItems=(props)=>{
                 </Link>
                        
                        {/* <Button onClick={()=>dispatch(cartAddItem(product))}>add to cart</Button> */}
-                       <Typography variant='subtitle'>${product.price}</Typography>
+                       <Typography variant='subtitle'>${product.parts[0].price}</Typography>
                      
 
                    </Box>    

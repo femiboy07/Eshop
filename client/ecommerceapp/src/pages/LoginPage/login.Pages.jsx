@@ -5,6 +5,7 @@ import styled from '@emotion/styled';
 import styledEngine from '@mui/styled-engine';
 import theme from '../../theme/theme';
 import { useLoginUserMutation } from '../../redux/features/api/apiSlice';
+import { useProtectedMutation } from '../../redux/features/api/apiSlice';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../redux/features/authReducer';
@@ -48,7 +49,8 @@ const PaperCont=styled(Paper)(({theme})=>({
 const LoginPage=()=>{
      const navigate=useNavigate();
      const dispatch=useDispatch();
-    const [loginUser,{data:loginData,isSuccess:isLoginSuccess,isLoading,isError,error,reset}]=useLoginUserMutation()
+    const [loginUser,{data:loginData,isSuccess:isLoginSuccess,isLoading,isError,error,reset}]=useLoginUserMutation();
+    
 
    
 const initialState={
@@ -89,38 +91,31 @@ const initialState={
     useEffect(()=>{
         if(isLoginSuccess){
           dispatch(setUser({name:loginData.name,token:loginData.token,userId:loginData._id}))
-          alert('Login Succesfull');
-          navigate(`/cart`)
+        alert('Login Succesfull');
+          navigate(`/`)
         }
         
 
-    },[isLoginSuccess])
+    },[isLoginSuccess,navigate, dispatch,loginData])
     
 
    
     return(
-    
-        <Container  maxWidth='xs'  fluid sx={{display:'flex',justifyContent:'center',alignItems:'center',margin:'0 auto',width:'100%',paddingTop:15}}>
-       <PaperCont>
+    <Container  maxWidth='xs'  fluid sx={{display:'flex',justifyContent:'center',alignItems:'center',margin:'0 auto',width:'100%',paddingTop:15}}>
+    <PaperCont>
        <BoxContainer component='form' onSubmit={handleSubmit}>
        {isError ? <Alert severity='error'>{error.data}</Alert>:
        isLoginSuccess ? <Alert severity='success'>login Succesfull</Alert>
        : null} 
         <InputLabel shrink htmlFor='email-type'>label</InputLabel>
-    
            <InputBase
            sx={{border:'1px solid black',mb:2}}
            placeholder='Email'
            inputProps={{"aria-label":'email'}}
-        //    value={formValue}
-        //    id='email-type'
            name='email'
            onChange={handleChange}
-        
-           />
-        
-        
-            <InputLabel shrink htmlFor='password-type'></InputLabel>
+            />
+          <InputLabel shrink htmlFor='password-type'></InputLabel>
            <InputBase
            sx={{border:'1px solid black'}}
            placeholder='PassWord'
@@ -129,18 +124,12 @@ const initialState={
            id='password-type'
            onChange={handleChange}
            />
-        
-         
         <Button variant='contained' type='submit' fullWidth sx={{backgroundColor:'black',color:'white',mt:4,padding:'20px 0 20px'}}>
           <Typography variant='h5'>LOGIN</Typography>    
         </Button>  
-         
         </BoxContainer> 
         </PaperCont> 
     </Container>
-        
-       
-        
     )
 }
 

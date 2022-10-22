@@ -1,5 +1,4 @@
-import { configureStore, combineReducers, getDefaultMiddleware } from "@reduxjs/toolkit";
-import productReducer from "./features/productReducer";
+import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import userReducer from "./features/userReducer";
 import cartSlice from "./features/cartSlice";
 import { apiSlice } from "./features/api/apiSlice";
@@ -46,10 +45,10 @@ export const store = configureStore({
                 ignoreActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
             }
         }).concat([apiSlice.middleware, authSlice.middleware, cartSlices.middleware]),
+        
 
 
     })
-    // store.dispatch(cartSlices.endpoints.getCart.initiate())
-    // store.dispatch(getTotals())
+
 export let persistor = persistStore(store);
 export const RootState = store.getState();

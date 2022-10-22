@@ -6,11 +6,13 @@ import { Box, Button } from '@mui/material';
 
 
 
-const PayButton=({cartItems})=>{
+const PayButton=({cartItems,padding,color,textColor})=>{
    const {userId}=useSelector(state=>state.auth);
    console.log(cartItems)
+   
   const headers = {
     'Content-Type': 'application/json',
+    'credentials':'true'
   }
 //  cartItems=JSON.stringify(cartItems);
    const handleCheckout=()=>{
@@ -22,14 +24,11 @@ const PayButton=({cartItems})=>{
    }
 
    return(
-    <Box sx={{border:'1px solid white'}}>
-      <Button onClick={()=>handleCheckout()} sx={{padding:'25px 150px 25px',backgroundColor:'black',color:'white','& .MuiBox-root':{
-        '&:hover':{
-          color:'red',
-          marginTop:'50px'
-        }
+    <>
+      <Button onClick={()=>handleCheckout()} sx={{padding:padding,backgroundColor:color,color:textColor,'&:hover':{
+        backgroundColor:'black'
       }}} variant='outlined'>Check Out</Button>
-    </Box>
+    </>
    )
 }
 

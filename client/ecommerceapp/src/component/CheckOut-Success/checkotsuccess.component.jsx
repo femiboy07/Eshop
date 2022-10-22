@@ -14,7 +14,7 @@ const CheckoutSuccess=()=>{
     useEffect(()=>{
         dispatch(clearCart({cart}));
         // dispatch(deleteCart())
-    },[dispatch])
+    },[dispatch,cart])
     return(
         <Container maxWidth='md'>
             <Box mt={10}>

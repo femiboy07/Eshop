@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import {AppBar,Box,FormControl,List,ListItem,ListItemText,NativeSelect,Toolbar,Typography,ListItemButton,Menu, MenuItem} from '@mui/material';
+import {AppBar,Box,FormControl,List,ListItem,ListItemText,NativeSelect,Toolbar,Typography,ListItemButton,Menu, MenuItem, Modal} from '@mui/material';
 import { IconButton } from "@mui/material";
 import { Drawer } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -19,10 +19,9 @@ import LoginTwoToneIcon from '@mui/icons-material/LoginTwoTone';
 import Badge from "@mui/material/Badge";
 import styled from "@emotion/styled";
 import {useSelector,useDispatch} from 'react-redux';
-import { logOut ,setUser} from "../../redux/features/authReducer";
+import { logOut } from "../../redux/features/authReducer";
 import { useEffect } from "react";
-import { useGetCartQuery } from "../../redux/features/api/apiSlice";
-import { useNavigate } from "react-router-dom";
+import { clearCart, getCart } from "../../redux/features/cartSlice";
 
 const Baged=styled(Badge)(({theme})=>({
       '& .MuiBadge-badge':{
@@ -35,19 +34,37 @@ const Baged=styled(Badge)(({theme})=>({
 }))
 
 
+const SearchModal=styled(Box)(({theme})=>({
+    borderBottom:'0.1rem solid rgba(18,18,18,.08)',
+    minHeight: 'calc(100% + 0 + (2 * 1px))',
+    height: '11%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background:'rgb(255,255,255)',
+    zIndex: 4,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+}))
+
+
+
+
 
 
 const NavBar=()=>{
 
   const [state, setState] =useState(false);
   const [searchClick,setSearchClick]=useState(false);
-  const [click,setClick]=useState(null);
-  const [anchorElNav, setAnchorElNav] = useState(null);
+  
   const token=useSelector(state=>state.auth.token );
-  const userId=useSelector(state=>state.auth.userId);
+
   // const [getCart,{isLoading}]=useGetCartQuery();
-  const navigate=useNavigate();
-  const user=localStorage.getItem('users' || "{}")
+  
+
   // useEffect(()=>{
   //   dispatch(setUser(user));
   // },[])
@@ -69,6 +86,7 @@ const NavBar=()=>{
   const handleSearchClose=()=>{setSearchClick(false)}
 // const quantity=useSelector(state=>state.user.quantity);
 const cartitems=useSelector(state=>state.cart);
+
 const params=useParams();
 const {itemId}=params;
  const cart=cartitems.carts !== null ? cartitems.carts.items.map(item=>item.quantity).reduce((prev,curr)=>prev + curr,0):null
@@ -77,9 +95,20 @@ const {itemId}=params;
 //      navigate(`/cart`)
 //  }
 
+const log=()=>{
+  dispatch(logOut())
+  
+}
+
+// useEffect(()=>{
+//   if(token === null){
+//     dispatch(logOut())
+//   }
+// },[token,dispatch])
+
 
     return(
-       <AppBar position="fixed" sx={{backgroundColor:'#fff',zIndex:(theme)=>theme.zIndex.drawer + 1}}>
+       <AppBar position="relative" sx={{backgroundColor:'#fff',zIndex:0}}>
          <Container maxWidth='lg'>
            <Toolbar disableGutters>
            <Typography
@@ -184,7 +213,7 @@ const {itemId}=params;
               edge='end'
               onClick={handleSearchClick}
              >
-               <SearchIcon/>
+              <SearchIcon/>
              </IconButton>}
 
             
@@ -228,7 +257,7 @@ const {itemId}=params;
                     Profile
                   </Link>
                 </MenuItem>
-                <MenuItem onClick={()=>dispatch(logOut())}>
+                <MenuItem onClick={log}>
                 <Link to='/login'>
                   Logout
                 </Link>
@@ -262,11 +291,8 @@ const {itemId}=params;
                aria-haspopup="true"
                sx={{color:'black'}}
                edge='end'
-              
-             
-             
-             >
-              <Link to={`/cart `} >
+              >
+              <Link to={`/cart `}  >
                 <Baged badgeContent={cart} sx={{display:'flex'}} color='primary' >
                 <ShoppingBagOutlinedIcon/>
                 </Baged>
@@ -276,16 +302,27 @@ const {itemId}=params;
              </IconButton>
             </Box>
            </Toolbar>
-           <Drawer
-            onClose={handleSearchClose}
-            anchor='top'
-            variant="temporary"
+           
+            <Modal
+          
             open={searchClick}
-            sx={{flexShrink: 0,
-            [`& .MuiDrawer-paper`]: { width: '100%',height:'100px',display:'flex',justifyContent:'center',alignItems:'center', position:'absolute',top:50,zIndex:1}}}
+            onClose={setSearchClick}
+            sx={{'&:after':{
+               top:'500px',
+               left:'0',
+               right:'0',
+               height:'100%',
+               position:'absolute',
+            }}}
             >
-            <SearchAppBar />
-            </Drawer> 
+             <SearchModal>
+             <SearchAppBar handleSearchClose={handleSearchClose}/>
+              </SearchModal> 
+           </Modal>
+            
+            
+             
+            
           </Container>
       </AppBar>
 

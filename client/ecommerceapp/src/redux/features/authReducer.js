@@ -1,27 +1,31 @@
 import { createSlice } from '@reduxjs/toolkit';
 // import { RootState } from '../store';
-import { useSelector } from 'react-redux';
+
 
 const isAuthSlice = createSlice({
     name: 'auth',
-    initialState: { name: null, token: null, userId: null },
+    initialState: { name: null, token: null, userId: null,carts :null},
     reducers: {
-        setUser: (state, { payload: { name, token, userId } }) => {
+        setUser: (state, { payload: { name, token, userId,carts } }) => {
             localStorage.setItem('users', JSON.stringify({
                 name: name,
                 token: token,
-                userId: userId
+                userId: userId,
+                carts:carts,
+                
             }))
             state.name = name;
             state.token = token;
             state.userId = userId;
-
+            state.carts=carts;
         },
         logOut: (state, action) => {
             localStorage.clear();
             state.name = null;
             state.token = null;
             state.userId = null;
+            state.carts=null;
+           
         }
     }
 })
